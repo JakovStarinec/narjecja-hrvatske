@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Pravila za Firestore tablicu rezultata (kolekcija "leaderboard").
+// Zalijepi ovo u Firebase Console -> Firestore Database -> Rules -> Publish.
+//
+// - Tablicu smije čitati bilo tko (i neprijavljeni), da se prikaže u appu.
+// - Svaki prijavljeni korisnik smije pisati SAMO svoj dokument (ID dokumenta = njegov UID).
+// - Rezultat (bestScore) smije samo rasti, nikad se ručno smanjiti.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboard/{userId} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.username is string
+                    && request.resource.data.bestScore is int;
+
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.username is string
+                    && request.resource.data.bestScore is int
+                    && request.resource.data.bestScore >= resource.data.bestScore;
+
+      allow delete: if false;
+    }
+  }
+}
